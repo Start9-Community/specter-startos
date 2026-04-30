@@ -6,8 +6,8 @@ on:
     paths-ignore: ['*.md']
     branches: ['035']
   push:
-    tags:
-      - 'v*-startos035-*'
+    paths-ignore: ['*.md']
+    branches: ['master', '035']
 
 jobs:
   BuildPackage:
