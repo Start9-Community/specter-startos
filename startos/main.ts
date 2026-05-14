@@ -11,29 +11,35 @@ export const main = sdk.setupMain(async ({ effects }) => {
       sdk.Mounts.of().mountVolume({
         volumeId: 'main',
         subpath: null,
-        mountpoint: '/root',
+        mountpoint: '/data',
         readonly: false
       }),
       'specter-sub'
     ),
-    exec: {
-      command: [
-        'python3',
-        '-m',
-        'cryptoadvance.specter',
-        'server',
-        '--host',
-        '0.0.0.0'
+
+   exec: {
+     command: [
+       'python3',
+       '-m',
+       'cryptoadvance.specter',
+       'server',
+       '--host',
+       '0.0.0.0',
+       '--port',
+       '25441',
+       '--specter-data-folder',
+       '/data/.specter'
       ]
     },
-    ready: {
-      display: 'Web Interface',
-      fn: () =>
-        sdk.healthCheck.checkPortListening(effects, uiPort, {
-          successMessage: 'The web interface is ready',
-          errorMessage: 'The web interface is not ready'
-        })
-    },
+   ready: {
+     display: 'Web Interface',
+     fn: () =>
+       sdk.healthCheck.checkPortListening(effects, uiPort, {
+         successMessage: 'The web interface is ready',
+         errorMessage: 'The web interface is not ready'
+       })
+   },
+
     requires: []
   })
 })
