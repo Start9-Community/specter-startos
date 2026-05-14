@@ -1,5 +1,6 @@
 import { selectNode } from '../actions/selectNode'
 import { configJson } from '../fileModels/config.json'
+import { i18n } from '../i18n'
 import { sdk } from '../sdk'
 
 export const promptSelectNode = sdk.setupOnInit(async (effects, kind) => {
@@ -13,6 +14,6 @@ export const promptSelectNode = sdk.setupOnInit(async (effects, kind) => {
   if (activeNodeAlias) return
 
   await sdk.action.createOwnTask(effects, selectNode, 'critical', {
-    reason: 'Please choose which backend Specter should use.',
+    reason: i18n('Please choose which backend Specter should use.'),
   })
 })

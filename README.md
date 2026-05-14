@@ -50,23 +50,23 @@ StartOS-specific files written to the `main` volume:
 
 | File | Purpose |
 |------|---------|
-| `.specter/config.json` | Tracks the selected backend (Bitcoin Core / Knots vs Spectrum Node) and the chosen Spectrum sub-backend. Managed by the Select Node action. |
-| `.specter/nodes/bitcoin_core.json` | Bitcoin Core / Knots node entry — host, port, protocol, and the dependency-scoped RPC user/password generated for Specter. |
+| `.specter/config.json` | Tracks the selected backend (Bitcoin RPC vs Spectrum Node) and the chosen Spectrum sub-backend. Managed by the Select Node action. |
+| `.specter/nodes/bitcoin_core.json` | Bitcoin RPC node entry — host, port, protocol, and the dependency-scoped RPC user/password generated for Specter. |
 | `.specter/nodes/spectrum_node.json` | Spectrum Node entry pointing at either `electrs.startos:50001` or `fulcrum.startos:50001`. |
 
 ## Installation and First-Run Flow
 
 1. On first install (or any time `config.json.active_node_alias` is unset) StartOS creates a **critical task** prompting the user to run **Select Node**.
-2. **Select Node** defaults to **Spectrum Node** with **Fulcrum** as the Electrum backend — the recommended path for fast wallet imports and rescans. The user can switch the variant to Bitcoin Core / Knots, and within Spectrum can switch the backend to electrs.
-3. When **Spectrum Node** is chosen, the Spectrum Node entry is wired to either `fulcrum.startos:50001` or `electrs.startos:50001` (TLS off). The chosen indexer in turn requires a Bitcoin Core / Knots node — that's a dependency of the indexer, not of Specter directly.
-4. When **Bitcoin Core / Knots** is chosen, Specter generates a fresh dependency-scoped RPC username/password and dispatches `generate-rpc-dependent` to the `bitcoind` service so the credentials are appended to its `rpcauth`. If a `bitcoin_core.json` already contains usable credentials, they are reused instead.
+2. **Select Node** defaults to **Bitcoin RPC** — the reliable, recommended path. The user can switch the variant to **Spectrum Node** (experimental) and, within Spectrum, choose Fulcrum or electrs as the backend.
+3. When **Bitcoin RPC** is chosen, Specter generates a fresh dependency-scoped RPC username/password and dispatches `generate-rpc-dependent` to the `bitcoind` service so the credentials are appended to its `rpcauth`. If a `bitcoin_core.json` already contains usable credentials, they are reused instead.
+4. When **Spectrum Node** is chosen, the Spectrum Node entry is wired to either `fulcrum.startos:50001` or `electrs.startos:50001` (TLS off). The chosen indexer in turn requires a Bitcoin node — that's a dependency of the indexer, not of Specter directly.
 5. Specter starts and serves its web UI on port 25441.
 
 ## Configuration Management
 
 | StartOS-Managed | Details |
 |-----------------|---------|
-| Active backend | Bitcoin Core / Knots vs Spectrum Node — set by the Select Node action |
+| Active backend | Bitcoin RPC vs Spectrum Node — set by the Select Node action |
 | Spectrum sub-backend | electrs or Fulcrum, when Spectrum Node is selected |
 | `bitcoin_core.json` host/port/protocol | Hardcoded to `bitcoind.startos:8332` over HTTP |
 | Bitcoin RPC credentials | Generated and registered on the bitcoind service via `generate-rpc-dependent`; reused if already present |
@@ -89,8 +89,8 @@ Everything else (wallet creation, multisig, devices, fees, block-explorer URLs, 
 - **Visibility:** Enabled (always visible)
 - **Availability:** Any status
 - **Inputs:**
-  - **Node** — `Spectrum Node (recommended)` (default) or `Bitcoin Core / Knots`
-  - **Spectrum Backend** — `Fulcrum (recommended)` (default) or `electrs`. Only shown when the Spectrum Node variant is selected.
+  - **Node** — `Bitcoin RPC (recommended)` (default) or `Spectrum Node (experimental)`
+  - **Spectrum Backend** — `Fulcrum` (default) or `electrs`. Only shown when the Spectrum Node variant is selected.
 - **Outputs:** A success message describing what was configured
 
 ## Backups and Restore

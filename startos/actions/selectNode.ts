@@ -3,6 +3,7 @@ import { generateRpcUserDependent } from 'bitcoin-core-startos/startos/actions/g
 import { bitcoinCoreJson } from '../fileModels/bitcoin_core.json'
 import { configJson } from '../fileModels/config.json'
 import { spectrumNodeJson } from '../fileModels/spectrum_node.json'
+import { i18n } from '../i18n'
 import { sdk } from '../sdk'
 
 const { InputSpec, Value, Variants } = sdk
@@ -37,29 +38,31 @@ function spectrumDefaults(backend: SpectrumBackend) {
 
 export const inputSpec = InputSpec.of({
   node: Value.union({
-    name: 'Node',
-    description:
-      'Choose how Specter reaches the Bitcoin network. Spectrum Node uses an Electrum indexer for fast wallet imports and rescans; Bitcoin Core / Knots talks RPC directly with no indexer.',
-    default: 'spectrum_node',
+    name: i18n('Node'),
+    description: i18n(
+      'Choose how Specter reaches the Bitcoin network. Bitcoin RPC talks to your Bitcoin Core or Knots node directly with no indexer and is the reliable, recommended path. Spectrum Node uses an Electrum indexer for faster wallet imports and rescans, but is experimental and currently less reliable than the direct RPC backend.',
+    ),
+    default: 'bitcoin_core',
     variants: Variants.of({
+      bitcoin_core: {
+        name: i18n('Bitcoin RPC (recommended)'),
+        spec: InputSpec.of({}),
+      },
       spectrum_node: {
-        name: 'Spectrum Node (recommended)',
+        name: i18n('Spectrum Node (experimental)'),
         spec: InputSpec.of({
           backend: Value.select({
-            name: 'Spectrum Backend',
-            description:
+            name: i18n('Spectrum Backend'),
+            description: i18n(
               'Electrum server that Spectrum Node queries. Fulcrum is faster on chunky wallet histories; electrs is lighter and quicker to sync from scratch.',
+            ),
             default: 'fulcrum',
             values: {
-              fulcrum: 'Fulcrum (recommended)',
-              electrs: 'electrs',
+              fulcrum: i18n('Fulcrum'),
+              electrs: i18n('electrs'),
             },
           }),
         }),
-      },
-      bitcoin_core: {
-        name: 'Bitcoin Core / Knots',
-        spec: InputSpec.of({}),
       },
     }),
   }),
@@ -69,8 +72,8 @@ export const selectNode = sdk.Action.withInput(
   'select-node',
 
   {
-    name: 'Select Node',
-    description: 'Choose the Bitcoin backend for Specter',
+    name: i18n('Select Node'),
+    description: i18n('Choose the Bitcoin backend for Specter'),
     warning: null,
     allowedStatuses: 'any',
     group: null,
@@ -85,16 +88,16 @@ export const selectNode = sdk.Action.withInput(
       .const(effects)
       .catch(() => null)
 
-    if (existing?.active_node_alias === 'bitcoin_core') {
-      return { node: { selection: 'bitcoin_core' as const, value: {} } }
+    if (existing?.active_node_alias === 'spectrum_node') {
+      return {
+        node: {
+          selection: 'spectrum_node' as const,
+          value: { backend: existing.spectrum_backend ?? 'fulcrum' },
+        },
+      }
     }
 
-    return {
-      node: {
-        selection: 'spectrum_node' as const,
-        value: { backend: existing?.spectrum_backend ?? 'fulcrum' },
-      },
-    }
+    return { node: { selection: 'bitcoin_core' as const, value: {} } }
   },
 
   async ({ effects, input }) => {
@@ -110,8 +113,11 @@ export const selectNode = sdk.Action.withInput(
 
       return {
         version: '1',
-        title: 'Success',
-        message: `Spectrum Node selected and configured with ${backend}.`,
+        title: i18n('Success'),
+        message:
+          backend === 'fulcrum'
+            ? i18n('Spectrum Node selected and configured with Fulcrum.')
+            : i18n('Spectrum Node selected and configured with electrs.'),
         result: null,
       }
     }
@@ -135,9 +141,10 @@ export const selectNode = sdk.Action.withInput(
       })
       return {
         version: '1',
-        title: 'Success',
-        message:
-          'Bitcoin Core / Knots is already configured. Existing RPC credentials were reused.',
+        title: i18n('Success'),
+        message: i18n(
+          'Bitcoin RPC is already configured. Existing RPC credentials were reused.',
+        ),
         result: null,
       }
     }
@@ -161,7 +168,7 @@ export const selectNode = sdk.Action.withInput(
           kind: 'partial',
           value: { username, password },
         },
-        reason: 'Specter needs dependency-scoped Bitcoin RPC credentials.',
+        reason: i18n('Specter needs dependency-scoped Bitcoin RPC credentials.'),
       },
     )
 
@@ -173,9 +180,10 @@ export const selectNode = sdk.Action.withInput(
 
     return {
       version: '1',
-      title: 'Success',
-      message:
-        'Bitcoin Core / Knots selected and new RPC credentials were generated for Specter.',
+      title: i18n('Success'),
+      message: i18n(
+        'Bitcoin RPC selected and new RPC credentials were generated for Specter.',
+      ),
       result: null,
     }
   },

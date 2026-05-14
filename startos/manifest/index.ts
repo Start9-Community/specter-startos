@@ -1,4 +1,11 @@
 import { setupManifest } from '@start9labs/start-sdk'
+import {
+  bitcoindDescription,
+  electrsDescription,
+  fulcrumDescription,
+  long,
+  short,
+} from './i18n'
 
 export const manifest = setupManifest({
   id: 'specter',
@@ -9,11 +16,7 @@ export const manifest = setupManifest({
   marketingUrl: 'https://specter.solutions',
   donationUrl: null,
   icon: 'icon.png',
-  description: {
-    short:
-      'A Bitcoin wallet UI focused on multisig and hardware wallet workflows.',
-    long: 'Specter Desktop is a Bitcoin wallet interface focused on sovereignty, multisignature setups, and hardware wallet support. This package runs Specter as a StartOS service with a web UI, persistent data, and a one-step setup that wires it to a Bitcoin Core/Knots node or to a Spectrum Node backed by electrs or Fulcrum.',
-  },
+  description: { short, long },
   volumes: ['main'],
   images: {
     specter: {
@@ -25,8 +28,7 @@ export const manifest = setupManifest({
   },
   dependencies: {
     bitcoind: {
-      description:
-        'Bitcoin Core or Knots backend. Used when "Bitcoin Core / Knots" is selected.',
+      description: bitcoindDescription,
       optional: true,
       metadata: {
         title: 'Bitcoin Core',
@@ -34,8 +36,7 @@ export const manifest = setupManifest({
       },
     },
     electrs: {
-      description:
-        'Electrum server backend reached via Spectrum Node. Used when Spectrum + electrs is selected.',
+      description: electrsDescription,
       optional: true,
       metadata: {
         title: 'electrs',
@@ -43,8 +44,7 @@ export const manifest = setupManifest({
       },
     },
     fulcrum: {
-      description:
-        'High-performance Electrum server backend reached via Spectrum Node. Used when Spectrum + Fulcrum is selected.',
+      description: fulcrumDescription,
       optional: true,
       metadata: {
         title: 'Fulcrum',
