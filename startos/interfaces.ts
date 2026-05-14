@@ -4,7 +4,7 @@ import { uiPort } from './utils'
 export const setInterfaces = sdk.setupInterfaces(async ({ effects }) => {
   const uiMulti = sdk.MultiHost.of(effects, 'main')
   const uiMultiOrigin = await uiMulti.bindPort(uiPort, {
-    protocol: 'http'
+    protocol: 'http',
   })
 
   const ui = sdk.createInterface(effects, {
@@ -16,7 +16,7 @@ export const setInterfaces = sdk.setupInterfaces(async ({ effects }) => {
     schemeOverride: null,
     username: null,
     path: '',
-    query: {}
+    query: {},
   })
 
   const uiReceipt = await uiMultiOrigin.export([ui])
