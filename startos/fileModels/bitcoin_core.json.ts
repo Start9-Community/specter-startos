@@ -3,7 +3,7 @@ import { sdk } from '../sdk'
 
 const shape = z.object({
   python_class: z.literal('cryptoadvance.specter.node.Node'),
-  fullpath: z.literal('/root/.specter/nodes/bitcoin_core.json'),
+  fullpath: z.literal('/data/.specter/nodes/bitcoin_core.json'),
   name: z.literal('Bitcoin Core'),
   alias: z.literal('bitcoin_core'),
   autodetect: z.literal(false),

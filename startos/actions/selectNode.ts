@@ -1,208 +1,138 @@
 import { utils } from '@start9labs/start-sdk'
-import { sdk } from '../sdk'
-import { bitcoindGenerateRpcUserDependent } from './bitcoindGenerateRpcUserDependent'
-import { configJson } from '../fileModels/config.json'
+import { generateRpcUserDependent } from 'bitcoin-core-startos/startos/actions/generateRpcUserDependent'
 import { bitcoinCoreJson } from '../fileModels/bitcoin_core.json'
+import { configJson } from '../fileModels/config.json'
 import { spectrumNodeJson } from '../fileModels/spectrum_node.json'
+import { sdk } from '../sdk'
 
-const { InputSpec, Value } = sdk
+const { InputSpec, Value, Variants } = sdk
 
-type ActiveNodeAlias = 'bitcoin_core' | 'spectrum_node'
 type SpectrumBackend = 'electrs' | 'fulcrum'
 
-const DEFAULT_BITCOIN_NODE = {
-  python_class: 'cryptoadvance.specter.node.Node' as const,
-  fullpath: '/root/.specter/nodes/bitcoin_core.json' as const,
-  name: 'Bitcoin Core' as const,
-  alias: 'bitcoin_core' as const,
-  autodetect: false as const,
-  datadir: '' as const,
-  port: '8332' as const,
-  host: 'bitcoind.startos' as const,
-  protocol: 'http' as const,
-  node_type: 'BTC' as const,
-}
+const BITCOIN_NODE_DEFAULTS = {
+  python_class: 'cryptoadvance.specter.node.Node',
+  fullpath: '/data/.specter/nodes/bitcoin_core.json',
+  name: 'Bitcoin Core',
+  alias: 'bitcoin_core',
+  autodetect: false,
+  datadir: '',
+  port: '8332',
+  host: 'bitcoind.startos',
+  protocol: 'http',
+  node_type: 'BTC',
+} as const
 
-function getSpectrumDefaults(backend: SpectrumBackend) {
+function spectrumDefaults(backend: SpectrumBackend) {
   return {
     python_class:
-      'cryptoadvance.specterext.spectrum.spectrum_node.SpectrumNode' as const,
-    fullpath: '/root/.specter/nodes/spectrum_node.json' as const,
-    name: 'Spectrum Node' as const,
-    alias: 'spectrum_node' as const,
+      'cryptoadvance.specterext.spectrum.spectrum_node.SpectrumNode',
+    fullpath: '/data/.specter/nodes/spectrum_node.json',
+    name: 'Spectrum Node',
+    alias: 'spectrum_node',
     host: backend === 'fulcrum' ? 'fulcrum.startos' : 'electrs.startos',
     port: 50001,
     ssl: false,
-  }
+  } as const
 }
 
 export const inputSpec = InputSpec.of({
-  active_node_alias: Value.select({
+  node: Value.union({
     name: 'Node',
-    default: 'bitcoin_core',
-    values: {
-      bitcoin_core: 'Bitcoin Core / Knots',
-      spectrum_node: 'Spectrum Node',
-    },
-  }),
-  spectrum_backend: Value.select({
-    name: 'Spectrum backend',
-    default: 'electrs',
-    values: {
-      electrs: 'electrs',
-      fulcrum: 'fulcrum',
-    },
+    description:
+      'Choose how Specter reaches the Bitcoin network. Spectrum Node uses an Electrum indexer for fast wallet imports and rescans; Bitcoin Core / Knots talks RPC directly with no indexer.',
+    default: 'spectrum_node',
+    variants: Variants.of({
+      spectrum_node: {
+        name: 'Spectrum Node (recommended)',
+        spec: InputSpec.of({
+          backend: Value.select({
+            name: 'Spectrum Backend',
+            description:
+              'Electrum server that Spectrum Node queries. Fulcrum is faster on chunky wallet histories; electrs is lighter and quicker to sync from scratch.',
+            default: 'fulcrum',
+            values: {
+              fulcrum: 'Fulcrum (recommended)',
+              electrs: 'electrs',
+            },
+          }),
+        }),
+      },
+      bitcoin_core: {
+        name: 'Bitcoin Core / Knots',
+        spec: InputSpec.of({}),
+      },
+    }),
   }),
 })
 
-async function safeReadConfig(effects: any) {
-  try {
-    return await configJson.read((v) => v).const(effects)
-  } catch {
-    return null
-  }
-}
-
-async function safeReadBitcoinNode(effects: any) {
-  try {
-    return await bitcoinCoreJson.read((v) => v).const(effects)
-  } catch {
-    return null
-  }
-}
-
-async function safeReadSpectrumNode(effects: any) {
-  try {
-    return await spectrumNodeJson.read((v) => v).const(effects)
-  } catch {
-    return null
-  }
-}
-
-function hasUsableBitcoinCredentials(
-  node: Awaited<ReturnType<typeof safeReadBitcoinNode>>,
-): node is NonNullable<Awaited<ReturnType<typeof safeReadBitcoinNode>>> {
-  return !!node?.user && !!node?.password
-}
-
-async function ensureConfig(
-  effects: any,
-  active_node_alias: ActiveNodeAlias,
-  spectrum_backend: SpectrumBackend | null,
-) {
-  const existing = await safeReadConfig(effects)
-
-  const payload = {
-    active_node_alias,
-    spectrum_backend:
-      active_node_alias === 'spectrum_node' ? spectrum_backend : null,
-    bitcoind: active_node_alias === 'bitcoin_core',
-  }
-
-  if (!existing) {
-    await configJson.write(effects, payload)
-    return
-  }
-
-  await configJson.merge(effects, payload)
-}
-
-async function ensureBitcoinNodeFile(
-  effects: any,
-  username: string,
-  password: string,
-) {
-  const existing = await safeReadBitcoinNode(effects)
-
-  if (!existing) {
-    await bitcoinCoreJson.write(effects, {
-      ...DEFAULT_BITCOIN_NODE,
-      user: username,
-      password,
-    })
-    return
-  }
-
-  await bitcoinCoreJson.merge(effects, {
-    python_class: DEFAULT_BITCOIN_NODE.python_class,
-    fullpath: DEFAULT_BITCOIN_NODE.fullpath,
-    name: DEFAULT_BITCOIN_NODE.name,
-    alias: DEFAULT_BITCOIN_NODE.alias,
-    autodetect: DEFAULT_BITCOIN_NODE.autodetect,
-    datadir: DEFAULT_BITCOIN_NODE.datadir,
-    port: DEFAULT_BITCOIN_NODE.port,
-    host: DEFAULT_BITCOIN_NODE.host,
-    protocol: DEFAULT_BITCOIN_NODE.protocol,
-    node_type: DEFAULT_BITCOIN_NODE.node_type,
-    user: existing.user || username,
-    password: existing.password || password,
-  })
-}
-
-async function ensureSpectrumNodeFile(
-  effects: any,
-  backend: SpectrumBackend,
-) {
-  const existing = await safeReadSpectrumNode(effects)
-  const defaults = getSpectrumDefaults(backend)
-
-  if (!existing) {
-    await spectrumNodeJson.write(effects, defaults)
-    return
-  }
-
-  await spectrumNodeJson.merge(effects, defaults)
-}
-
 export const selectNode = sdk.Action.withInput(
   'select-node',
-  async () => ({
+
+  {
     name: 'Select Node',
     description: 'Choose the Bitcoin backend for Specter',
     warning: null,
     allowedStatuses: 'any',
     group: null,
     visibility: 'enabled',
-  }),
+  },
+
   inputSpec,
+
   async ({ effects }) => {
-    const existing = await safeReadConfig(effects)
+    const existing = await configJson
+      .read((c) => c)
+      .const(effects)
+      .catch(() => null)
+
+    if (existing?.active_node_alias === 'bitcoin_core') {
+      return { node: { selection: 'bitcoin_core' as const, value: {} } }
+    }
+
     return {
-      active_node_alias:
-        (existing?.active_node_alias as ActiveNodeAlias | null) ?? 'bitcoin_core',
-      spectrum_backend:
-        (existing?.spectrum_backend as SpectrumBackend | null) ?? 'electrs',
+      node: {
+        selection: 'spectrum_node' as const,
+        value: { backend: existing?.spectrum_backend ?? 'fulcrum' },
+      },
     }
   },
+
   async ({ effects, input }) => {
-    const activeNode = input.active_node_alias as ActiveNodeAlias
-    const spectrumBackend = (input.spectrum_backend ||
-      'electrs') as SpectrumBackend
+    if (input.node.selection === 'spectrum_node') {
+      const backend = input.node.value.backend as SpectrumBackend
 
-    await ensureConfig(
-      effects,
-      activeNode,
-      activeNode === 'spectrum_node' ? spectrumBackend : null,
-    )
+      await configJson.write(effects, {
+        active_node_alias: 'spectrum_node',
+        spectrum_backend: backend,
+        bitcoind: false,
+      })
+      await spectrumNodeJson.write(effects, spectrumDefaults(backend))
 
-    if (activeNode === 'spectrum_node') {
-      await ensureSpectrumNodeFile(effects, spectrumBackend)
       return {
         version: '1',
         title: 'Success',
-        message: `Spectrum Node selected and configured with ${spectrumBackend}.`,
+        message: `Spectrum Node selected and configured with ${backend}.`,
         result: null,
       }
     }
 
-    const existingNode = await safeReadBitcoinNode(effects)
+    await configJson.write(effects, {
+      active_node_alias: 'bitcoin_core',
+      spectrum_backend: null,
+      bitcoind: true,
+    })
 
-    if (hasUsableBitcoinCredentials(existingNode)) {
-      await ensureBitcoinNodeFile(
-        effects,
-        existingNode.user,
-        existingNode.password,
-      )
+    const existingBitcoinNode = await bitcoinCoreJson
+      .read((n) => n)
+      .const(effects)
+      .catch(() => null)
+
+    if (existingBitcoinNode?.user && existingBitcoinNode?.password) {
+      await bitcoinCoreJson.write(effects, {
+        ...BITCOIN_NODE_DEFAULTS,
+        user: existingBitcoinNode.user,
+        password: existingBitcoinNode.password,
+      })
       return {
         version: '1',
         title: 'Success',
@@ -212,12 +142,11 @@ export const selectNode = sdk.Action.withInput(
       }
     }
 
-    const btcUsername = `specter_${utils.getDefaultString({
+    const username = `specter_${utils.getDefaultString({
       charset: 'a-z,A-Z',
       len: 8,
     })}`
-
-    const btcPassword = utils.getDefaultString({
+    const password = utils.getDefaultString({
       charset: 'a-z,A-Z,1-9,_,-',
       len: 22,
     })
@@ -225,21 +154,22 @@ export const selectNode = sdk.Action.withInput(
     await sdk.action.createTask(
       effects,
       'bitcoind',
-      bitcoindGenerateRpcUserDependent,
+      generateRpcUserDependent,
       'critical',
       {
         input: {
           kind: 'partial',
-          value: {
-            username: btcUsername,
-            password: btcPassword,
-          },
+          value: { username, password },
         },
         reason: 'Specter needs dependency-scoped Bitcoin RPC credentials.',
       },
     )
 
-    await ensureBitcoinNodeFile(effects, btcUsername, btcPassword)
+    await bitcoinCoreJson.write(effects, {
+      ...BITCOIN_NODE_DEFAULTS,
+      user: username,
+      password,
+    })
 
     return {
       version: '1',

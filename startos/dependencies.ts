@@ -1,38 +1,38 @@
-import { sdk } from './sdk'
+import { T } from '@start9labs/start-sdk'
 import { configJson } from './fileModels/config.json'
+import { sdk } from './sdk'
 
 export const setDependencies = sdk.setupDependencies(async ({ effects }) => {
-  const config = await configJson.read((v) => v).const(effects).catch(() => null)
+  const config = await configJson
+    .read((c) => c)
+    .const(effects)
+    .catch(() => null)
 
-  if (!config?.active_node_alias) {
-    return {}
-  }
+  const deps: T.CurrentDependenciesResult<any> = {}
+
+  if (!config?.active_node_alias) return deps
 
   if (config.active_node_alias === 'spectrum_node') {
     if (config.spectrum_backend === 'fulcrum') {
-      return {
-        fulcrum: {
-          kind: 'running',
-          versionRange: '>=1.0.0',
-          healthChecks: [],
-        },
+      deps.fulcrum = {
+        kind: 'running',
+        versionRange: '>=2.1.0:0',
+        healthChecks: ['primary', 'sync-progress'],
+      }
+    } else {
+      deps.electrs = {
+        kind: 'running',
+        versionRange: '>=0.10.0:0',
+        healthChecks: ['electrs', 'sync'],
       }
     }
-
-    return {
-      electrs: {
-        kind: 'running',
-        versionRange: '>=0.10.0',
-        healthChecks: [],
-      },
-    }
+    return deps
   }
 
-  return {
-    bitcoind: {
-      kind: 'running',
-      versionRange: '>=29.0',
-      healthChecks: [],
-    },
+  deps.bitcoind = {
+    kind: 'running',
+    versionRange: '>=28.3:0',
+    healthChecks: ['bitcoind', 'sync-progress'],
   }
+  return deps
 })
