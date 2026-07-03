@@ -27,7 +27,6 @@ A Bitcoin wallet UI focused on multisig and hardware wallet workflows. See the [
 - [Dependencies](#dependencies)
 - [Limitations and Differences](#limitations-and-differences)
 - [What Is Unchanged from Upstream](#what-is-unchanged-from-upstream)
-- [Contributing](#contributing)
 - [Quick Reference for AI Consumers](#quick-reference-for-ai-consumers)
 
 ---
@@ -52,14 +51,14 @@ StartOS-specific files written to the `main` volume:
 |------|---------|
 | `.specter/config.json` | Tracks the selected backend (Bitcoin RPC vs Spectrum Node) and the chosen Spectrum sub-backend. Managed by the Select Node action. |
 | `.specter/nodes/bitcoin_core.json` | Bitcoin RPC node entry — host, port, protocol, and the dependency-scoped RPC user/password generated for Specter. |
-| `.specter/nodes/spectrum_node.json` | Spectrum Node entry pointing at either `electrs.startos:50001` or `fulcrum.startos:50001`. |
+| `.specter/nodes/spectrum_node.json` | Spectrum Node entry pointing at the selected Electrum backend (electrs or Fulcrum), resolved to its address on the StartOS service (LXC) bridge. |
 
 ## Installation and First-Run Flow
 
 1. On first install (or any time `config.json.active_node_alias` is unset) StartOS creates a **critical task** prompting the user to run **Select Node**.
 2. **Select Node** defaults to **Bitcoin RPC** — the reliable, recommended path. The user can switch the variant to **Spectrum Node** (experimental) and, within Spectrum, choose Fulcrum or electrs as the backend.
 3. When **Bitcoin RPC** is chosen, Specter generates a fresh dependency-scoped RPC username/password and dispatches `generate-rpc-dependent` to the `bitcoind` service so the credentials are appended to its `rpcauth`. If a `bitcoin_core.json` already contains usable credentials, they are reused instead.
-4. When **Spectrum Node** is chosen, the Spectrum Node entry is wired to either `fulcrum.startos:50001` or `electrs.startos:50001` (TLS off). The chosen indexer in turn requires a Bitcoin node — that's a dependency of the indexer, not of Specter directly.
+4. When **Spectrum Node** is chosen, the Spectrum Node entry is wired to the selected indexer (Fulcrum or electrs), reached at its plain-TCP Electrum address over the StartOS service (LXC) bridge (TLS off). The chosen indexer in turn requires a Bitcoin node — that's a dependency of the indexer, not of Specter directly.
 5. Specter starts and serves its web UI on port 25441.
 
 ## Configuration Management
@@ -68,9 +67,9 @@ StartOS-specific files written to the `main` volume:
 |-----------------|---------|
 | Active backend | Bitcoin RPC vs Spectrum Node — set by the Select Node action |
 | Spectrum sub-backend | electrs or Fulcrum, when Spectrum Node is selected |
-| `bitcoin_core.json` host/port/protocol | Hardcoded to `bitcoind.startos:8332` over HTTP |
+| `bitcoin_core.json` host/port/protocol | bitcoind's RPC address, resolved over the StartOS service (LXC) bridge, over HTTP |
 | Bitcoin RPC credentials | Generated and registered on the bitcoind service via `generate-rpc-dependent`; reused if already present |
-| `spectrum_node.json` host | `electrs.startos` or `fulcrum.startos`, port `50001`, `ssl: false` |
+| `spectrum_node.json` host/port | The selected indexer's Electrum address, resolved over the StartOS service (LXC) bridge, `ssl: false` |
 
 Everything else (wallet creation, multisig, devices, fees, block-explorer URLs, etc.) is configured through Specter's own web UI.
 
@@ -118,8 +117,8 @@ The active dependency is determined at runtime from `config.json`. Exactly one o
 ## Limitations and Differences
 
 1. **Backend choice is a one-shot selection** — switching backends requires re-running the Select Node action.
-2. **Spectrum endpoint is hardcoded to `:50001` with TLS off** — matches StartOS service-network conventions; not user-configurable from inside Specter.
-3. **Bitcoin RPC host is hardcoded to `bitcoind.startos:8332` over HTTP** — same reason; users do not enter RPC details manually.
+2. **Spectrum endpoint uses plain TCP with TLS off** — the indexer's bridge address is resolved automatically; not user-configurable from inside Specter.
+3. **Bitcoin RPC uses bitcoind's bridge address over HTTP** — same reason; users do not enter RPC details manually.
 4. **No HWI Bridge integration** — Specter runs server-only; hardware wallet support is via Specter's web UI flows (USB pass-through is not provided by the StartOS package).
 
 ## What Is Unchanged from Upstream
@@ -128,12 +127,6 @@ The active dependency is determined at runtime from `config.json`. Exactly one o
 - Hardware wallet integration via the Specter web UI
 - Tor / proxy settings, block-explorer URL settings, language, and other Specter settings
 - Wallet import/export, descriptor handling, and the Specter API
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for build instructions and development workflow.
-
----
 
 ## Quick Reference for AI Consumers
 

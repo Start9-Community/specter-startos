@@ -166,7 +166,8 @@ export const selectNode = sdk.Action.withInput(
       {
         input: {
           kind: 'partial',
-          value: { username, password },
+          accept: [{ username, password }],
+          set: { username, password },
         },
         reason: i18n('Specter needs dependency-scoped Bitcoin RPC credentials.'),
       },

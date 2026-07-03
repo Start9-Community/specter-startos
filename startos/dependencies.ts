@@ -16,13 +16,13 @@ export const setDependencies = sdk.setupDependencies(async ({ effects }) => {
     if (config.spectrum_backend === 'fulcrum') {
       deps.fulcrum = {
         kind: 'running',
-        versionRange: '>=2.1.0:0',
+        versionRange: '>=2.1.1:6',
         healthChecks: ['primary', 'sync-progress'],
       }
     } else {
       deps.electrs = {
         kind: 'running',
-        versionRange: '>=0.10.0:0',
+        versionRange: '>=0.11.1:9',
         healthChecks: ['electrs', 'sync'],
       }
     }
@@ -31,7 +31,7 @@ export const setDependencies = sdk.setupDependencies(async ({ effects }) => {
 
   deps.bitcoind = {
     kind: 'running',
-    versionRange: '>=28.3:0',
+    versionRange: '>=28.4:13',
     healthChecks: ['bitcoind', 'sync-progress'],
   }
   return deps
