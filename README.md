@@ -108,7 +108,7 @@ Everything else (wallet creation, multisig, devices, fees, block-explorer URLs, 
 
 | Dependency | Required | Version | Health checks | Purpose |
 |------------|----------|---------|---------------|---------|
-| Bitcoin Core (`bitcoind`) | Optional | `>=28.3:0` | `bitcoind`, `sync-progress` | Native RPC backend (also satisfied by Bitcoin Knots, which shares the `bitcoind` package id) |
+| Bitcoin (`bitcoind`) | Optional | `>=28.3:0` | `bitcoind`, `sync-progress` | Native RPC backend (satisfied by Bitcoin Core or Bitcoin Knots, which share the `bitcoind` package id) |
 | `electrs` | Optional | `>=0.10.0:0` | `electrs`, `sync` | Electrum server reached via Spectrum Node |
 | `fulcrum` | Optional | `>=2.1.0:0` | `primary`, `sync-progress` | High-performance Electrum server reached via Spectrum Node |
 

@@ -8,7 +8,7 @@ const shape = z.object({
   fullpath: z.literal('/data/.specter/nodes/spectrum_node.json'),
   name: z.literal('Spectrum Node'),
   alias: z.literal('spectrum_node'),
-  host: z.string().catch('127.0.0.1'),
+  host: z.string().optional().catch(undefined),
   port: z.number().catch(50001),
   ssl: z.boolean().catch(false),
 })

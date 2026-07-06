@@ -11,7 +11,7 @@ const shape = z.object({
   user: z.string(),
   password: z.string(),
   port: z.string().catch('8332'),
-  host: z.string().catch('127.0.0.1'),
+  host: z.string().optional().catch(undefined),
   protocol: z.literal('http'),
   node_type: z.literal('BTC'),
 })

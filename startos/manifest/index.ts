@@ -31,7 +31,7 @@ export const manifest = setupManifest({
       description: bitcoindDescription,
       optional: true,
       metadata: {
-        title: 'Bitcoin Core',
+        title: 'Bitcoin',
         icon: 'https://raw.githubusercontent.com/Start9Labs/bitcoin-core-startos/master/icon.svg',
       },
     },

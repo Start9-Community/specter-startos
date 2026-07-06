@@ -1,5 +1,6 @@
 export const short = {
-  en_US: 'A Bitcoin wallet UI focused on multisig and hardware wallet workflows.',
+  en_US:
+    'A Bitcoin wallet UI focused on multisig and hardware wallet workflows.',
   es_ES:
     'Interfaz de monedero Bitcoin centrada en flujos multifirma y de carteras hardware.',
   de_DE:
@@ -20,19 +21,15 @@ export const long = {
   pl_PL:
     'Specter Desktop to interfejs portfela Bitcoin skoncentrowany na suwerenności, konfiguracjach multisig i obsłudze portfeli sprzętowych. Ten pakiet uruchamia Specter jako usługę StartOS z interfejsem webowym, trwałymi danymi i konfiguracją jednym krokiem, która domyślnie łączy go z węzłem Bitcoin przez bezpośrednie RPC; eksperymentalny backend Spectrum Node (electrs lub Fulcrum) jest dostępny dla użytkowników, którzy chcą importów portfela opartych na indekserze.',
   fr_FR:
-    "Specter Desktop est une interface de portefeuille Bitcoin axée sur la souveraineté, les configurations multisignature et la prise en charge des portefeuilles matériels. Ce paquet exécute Specter comme service StartOS avec une interface web, des données persistantes et une configuration en une étape qui le relie par défaut à un nœud Bitcoin via RPC direct, avec un backend Spectrum Node expérimental (electrs ou Fulcrum) disponible pour les utilisateurs souhaitant des imports de portefeuille via indexeur.",
+    'Specter Desktop est une interface de portefeuille Bitcoin axée sur la souveraineté, les configurations multisignature et la prise en charge des portefeuilles matériels. Ce paquet exécute Specter comme service StartOS avec une interface web, des données persistantes et une configuration en une étape qui le relie par défaut à un nœud Bitcoin via RPC direct, avec un backend Spectrum Node expérimental (electrs ou Fulcrum) disponible pour les utilisateurs souhaitant des imports de portefeuille via indexeur.',
 }
 
 export const bitcoindDescription = {
-  en_US: 'Bitcoin Core or Knots backend. Used when "Bitcoin RPC" is selected.',
-  es_ES:
-    'Backend Bitcoin Core o Knots. Se utiliza cuando se selecciona «Bitcoin RPC».',
-  de_DE:
-    'Bitcoin-Core- oder Knots-Backend. Wird verwendet, wenn „Bitcoin RPC" ausgewählt ist.',
-  pl_PL:
-    'Backend Bitcoin Core lub Knots. Używany, gdy wybrano „Bitcoin RPC".',
-  fr_FR:
-    "Backend Bitcoin Core ou Knots. Utilisé lorsque « Bitcoin RPC » est sélectionné.",
+  en_US: 'Bitcoin backend. Used when "Bitcoin RPC" is selected.',
+  es_ES: 'Backend Bitcoin. Se utiliza cuando se selecciona «Bitcoin RPC».',
+  de_DE: 'Bitcoin-Backend. Wird verwendet, wenn „Bitcoin RPC" ausgewählt ist.',
+  pl_PL: 'Backend Bitcoin. Używany, gdy wybrano „Bitcoin RPC".',
+  fr_FR: 'Backend Bitcoin. Utilisé lorsque « Bitcoin RPC » est sélectionné.',
 }
 
 export const electrsDescription = {
@@ -45,7 +42,7 @@ export const electrsDescription = {
   pl_PL:
     'Backend serwera Electrum osiągany przez Spectrum Node. Używany, gdy wybrano Spectrum + electrs.',
   fr_FR:
-    "Backend de serveur Electrum atteint via Spectrum Node. Utilisé lorsque Spectrum + electrs est sélectionné.",
+    'Backend de serveur Electrum atteint via Spectrum Node. Utilisé lorsque Spectrum + electrs est sélectionné.',
 }
 
 export const fulcrumDescription = {
@@ -58,5 +55,5 @@ export const fulcrumDescription = {
   pl_PL:
     'Wysokowydajny backend serwera Electrum osiągany przez Spectrum Node. Używany, gdy wybrano Spectrum + Fulcrum.',
   fr_FR:
-    "Backend de serveur Electrum haute performance atteint via Spectrum Node. Utilisé lorsque Spectrum + Fulcrum est sélectionné.",
+    'Backend de serveur Electrum haute performance atteint via Spectrum Node. Utilisé lorsque Spectrum + Fulcrum est sélectionné.',
 }
