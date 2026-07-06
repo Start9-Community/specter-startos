@@ -1,72 +1,92 @@
-import { T, utils } from '@start9labs/start-sdk'
+import { T } from '@start9labs/start-sdk'
 import {
   rpcHostId as btcRpcHostId,
-  rpcInterfaceId as btcRpcInterfaceId,
+  rpcPort as btcRpcPort,
 } from 'bitcoin-core-startos/startos/utils'
+import {
+  electrumHostId as electrsHostId,
+  port as electrsPort,
+} from 'electrs-startos/startos/utils'
+import {
+  electrumPort as fulcrumPort,
+  mainHostId as fulcrumHostId,
+} from 'fulcrum-startos/startos/utils'
 import { sdk } from './sdk'
 
 export const uiPort = 25441
 
-// electrs / fulcrum expose their Electrum server under these host + interface
-// ids (the `sdk.MultiHost.of` arg / `createInterface` id in each package). The
-// packageId doubles as the electrum backend name.
-const electrumHostId = { electrs: 'electrum', fulcrum: 'main' } as const
-const electrumInterfaceId = 'main'
+// bitcoind's RPC binding, taken from the dependency's own exports so the
+// bridge lookup tracks its source of truth (host id + internal port).
+export const btcRpcBinding = {
+  packageId: 'bitcoind',
+  hostId: btcRpcHostId,
+  internalPort: btcRpcPort,
+} as const
+
+// The selected Electrum backend's binding, keyed by packageId (which doubles
+// as the backend name). electrs binds its Electrum server on the 'electrum'
+// host, Fulcrum on 'main'; both listen plaintext on 50001, reachable over the
+// bridge as the ssl=false variant that Spectrum Node dials.
+export const electrumBinding = {
+  electrs: {
+    packageId: 'electrs',
+    hostId: electrsHostId,
+    internalPort: electrsPort,
+  },
+  fulcrum: {
+    packageId: 'fulcrum',
+    hostId: fulcrumHostId,
+    internalPort: fulcrumPort,
+  },
+} as const
 
 /**
- * The IPv4 LXC-bridge `hostname`/`port` for an interface on an already-resolved
- * `FilledHost`. Pure — call it INSIDE a `sdk.host` map fn so `.const()` narrows
- * its reactivity to just this address. `.startos` / direct container IPs are
- * deprecated; containers reach each other over this bridge. `ssl` narrows to the
- * http vs https variant when an interface exposes both.
+ * Bridge address (`10.0.3.1:<assigned external port>`) of a dependency's
+ * binding, as a minimal reactive value. Chain `.const()` in main: the mapped
+ * string only changes when the address itself does, so main restarts exactly
+ * on dependency install/uninstall/port-change and never on dependency
+ * updates. Chain `.once()` in an action context. `fallbackPort` keeps the
+ * value non-null while the dependency is absent — sanctioned only for tor's
+ * allocator-guaranteed SOCKS 9050. Drop-in for the planned SDK
+ * `sdk.host.getBridgeAddress` helper.
  */
-const bridgeAddr = (
-  host: utils.FilledHost | null,
-  interfaceId: string,
-  ssl?: boolean,
-) => {
-  const iface =
-    host &&
-    Object.values(host.bindings)
-      .flatMap((b) => Object.values(b.interfaces))
-      .find((i) => i.id === interfaceId)
-  const h =
-    iface &&
-    iface.addressInfo
-      .filter({
-        kind: 'bridge',
-        predicate: (hn) =>
-          hn.metadata.kind === 'ipv4' && (ssl === undefined || hn.ssl === ssl),
-      })
-      .hostnames[0]
-  return h && h.port != null ? { hostname: h.hostname, port: h.port } : undefined
-}
-
-/**
- * bitcoind's RPC `hostname`/`port` over the LXC bridge, for specter's
- * `bitcoin_core.json` (replaces the deprecated `bitcoind.startos:8332`).
- * `undefined` until the dependency's interface is reachable.
- */
-export const bitcoindRpcAddr = (effects: T.Effects) =>
-  sdk.host
-    .get(effects, { hostId: btcRpcHostId, packageId: 'bitcoind' }, (host) =>
-      bridgeAddr(host, btcRpcInterfaceId, false),
-    )
-    .const()
-
-/**
- * The Electrum server's plain-TCP `hostname`/`port` over the LXC bridge, for
- * specter's `spectrum_node.json` (replaces the deprecated `electrs.startos` /
- * `fulcrum.startos`). `undefined` until the backend's interface is reachable.
- */
-export const electrumAddr = (
+export function bridgeAddress(
   effects: T.Effects,
-  backend: 'electrs' | 'fulcrum',
-) =>
-  sdk.host
-    .get(
+  opts: {
+    packageId: string
+    hostId: string
+    internalPort: number
+    fallbackPort: number
+  },
+): { const(): Promise<string>; once(): Promise<string> }
+export function bridgeAddress(
+  effects: T.Effects,
+  opts: { packageId: string; hostId: string; internalPort: number },
+): { const(): Promise<string | null>; once(): Promise<string | null> }
+export function bridgeAddress(
+  effects: T.Effects,
+  opts: {
+    packageId: string
+    hostId: string
+    internalPort: number
+    fallbackPort?: number
+  },
+) {
+  const watchable = async () => {
+    const osIp = await sdk.getOsIp(effects)
+    return sdk.host.get(
       effects,
-      { hostId: electrumHostId[backend], packageId: backend },
-      (host) => bridgeAddr(host, electrumInterfaceId, false),
+      { packageId: opts.packageId, hostId: opts.hostId },
+      (host) => {
+        const port =
+          host?.bindings[opts.internalPort]?.net.assignedPort ??
+          opts.fallbackPort
+        return port != null ? `${osIp}:${port}` : null
+      },
     )
-    .const()
+  }
+  return {
+    const: async () => (await watchable()).const(),
+    once: async () => (await watchable()).once(),
+  }
+}

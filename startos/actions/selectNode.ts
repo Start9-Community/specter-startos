@@ -10,6 +10,8 @@ const { InputSpec, Value, Variants } = sdk
 
 type SpectrumBackend = 'electrs' | 'fulcrum'
 
+// host/port are placeholders: main.ts overwrites them with the dependency's
+// live LXC-bridge address before the daemon reads the file.
 const BITCOIN_NODE_DEFAULTS = {
   python_class: 'cryptoadvance.specter.node.Node',
   fullpath: '/data/.specter/nodes/bitcoin_core.json',
@@ -18,23 +20,20 @@ const BITCOIN_NODE_DEFAULTS = {
   autodetect: false,
   datadir: '',
   port: '8332',
-  host: 'bitcoind.startos',
+  host: '127.0.0.1',
   protocol: 'http',
   node_type: 'BTC',
 } as const
 
-function spectrumDefaults(backend: SpectrumBackend) {
-  return {
-    python_class:
-      'cryptoadvance.specterext.spectrum.spectrum_node.SpectrumNode',
-    fullpath: '/data/.specter/nodes/spectrum_node.json',
-    name: 'Spectrum Node',
-    alias: 'spectrum_node',
-    host: backend === 'fulcrum' ? 'fulcrum.startos' : 'electrs.startos',
-    port: 50001,
-    ssl: false,
-  } as const
-}
+const SPECTRUM_NODE_DEFAULTS = {
+  python_class: 'cryptoadvance.specterext.spectrum.spectrum_node.SpectrumNode',
+  fullpath: '/data/.specter/nodes/spectrum_node.json',
+  name: 'Spectrum Node',
+  alias: 'spectrum_node',
+  host: '127.0.0.1',
+  port: 50001,
+  ssl: false,
+} as const
 
 export const inputSpec = InputSpec.of({
   node: Value.union({
@@ -109,7 +108,7 @@ export const selectNode = sdk.Action.withInput(
         spectrum_backend: backend,
         bitcoind: false,
       })
-      await spectrumNodeJson.write(effects, spectrumDefaults(backend))
+      await spectrumNodeJson.write(effects, SPECTRUM_NODE_DEFAULTS)
 
       return {
         version: '1',

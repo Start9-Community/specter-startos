@@ -3,37 +3,38 @@ import { configJson } from './fileModels/config.json'
 import { spectrumNodeJson } from './fileModels/spectrum_node.json'
 import { i18n } from './i18n'
 import { sdk } from './sdk'
-import { bitcoindRpcAddr, electrumAddr, uiPort } from './utils'
+import { bridgeAddress, btcRpcBinding, electrumBinding, uiPort } from './utils'
 
 export const main = sdk.setupMain(async ({ effects }) => {
   console.info('Starting Specter!')
 
   // Point specter's node config at the active backend's live LXC-bridge
-  // address before the daemon reads it (replaces the deprecated `.startos`
-  // DNS). Reactive: main re-fires and restarts specter if the backend
-  // selection or the dependency's bridge address changes.
+  // address before the daemon reads it. The bridgeAddress `.const()` restarts
+  // specter only when that address actually changes (dependency
+  // install/uninstall/port-change), never on a dependency update; while the
+  // dependency is absent it resolves to a dead loopback placeholder that just
+  // fails to connect until the `.const()` heals on install.
   const config = await configJson
     .read((c) => c)
     .const(effects)
     .catch(() => null)
 
   if (config?.active_node_alias === 'bitcoin_core') {
-    const rpc = await bitcoindRpcAddr(effects)
-    if (rpc)
-      await bitcoinCoreJson.merge(effects, {
-        host: rpc.hostname,
-        port: String(rpc.port),
-      })
+    const [host, port] = (
+      (await bridgeAddress(effects, btcRpcBinding).const()) ??
+      `127.0.0.1:${btcRpcBinding.internalPort}`
+    ).split(':')
+    await bitcoinCoreJson.merge(effects, { host, port })
   } else if (config?.active_node_alias === 'spectrum_node') {
-    const addr = await electrumAddr(
-      effects,
-      config.spectrum_backend === 'fulcrum' ? 'fulcrum' : 'electrs',
-    )
-    if (addr)
-      await spectrumNodeJson.merge(effects, {
-        host: addr.hostname,
-        port: addr.port,
-      })
+    const binding =
+      electrumBinding[
+        config.spectrum_backend === 'fulcrum' ? 'fulcrum' : 'electrs'
+      ]
+    const [host, port] = (
+      (await bridgeAddress(effects, binding).const()) ??
+      `127.0.0.1:${binding.internalPort}`
+    ).split(':')
+    await spectrumNodeJson.merge(effects, { host, port: Number(port) })
   }
 
   const subcontainer = sdk.SubContainer.of(

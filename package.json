@@ -7,7 +7,9 @@
   },
   "dependencies": {
     "@start9labs/start-sdk": "^2.0.1",
-    "bitcoin-core-startos": "git+https://github.com/Start9Labs/bitcoin-core-startos.git#next/28.x"
+    "bitcoin-core-startos": "github:Start9Labs/bitcoin-core-startos#next/28.x",
+    "electrs-startos": "github:Start9-Community/electrs-startos#next",
+    "fulcrum-startos": "github:Start9Labs/fulcrum-startos#next"
   },
   "devDependencies": {
     "@types/node": "^22.19.0",
