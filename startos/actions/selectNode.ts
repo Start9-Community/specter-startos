@@ -10,6 +10,10 @@ const { InputSpec, Value, Variants } = sdk
 
 type SpectrumBackend = 'electrs' | 'fulcrum'
 
+// host is left unset here so no fake dependency address is persisted: main.ts
+// fills in the dependency's live LXC-bridge host before the daemon reads the
+// file, and writes nothing while the dependency is absent — Specter then just
+// fails to connect until the dependency installs and main heals the address.
 const BITCOIN_NODE_DEFAULTS = {
   python_class: 'cryptoadvance.specter.node.Node',
   fullpath: '/data/.specter/nodes/bitcoin_core.json',
@@ -18,29 +22,24 @@ const BITCOIN_NODE_DEFAULTS = {
   autodetect: false,
   datadir: '',
   port: '8332',
-  host: 'bitcoind.startos',
   protocol: 'http',
   node_type: 'BTC',
 } as const
 
-function spectrumDefaults(backend: SpectrumBackend) {
-  return {
-    python_class:
-      'cryptoadvance.specterext.spectrum.spectrum_node.SpectrumNode',
-    fullpath: '/data/.specter/nodes/spectrum_node.json',
-    name: 'Spectrum Node',
-    alias: 'spectrum_node',
-    host: backend === 'fulcrum' ? 'fulcrum.startos' : 'electrs.startos',
-    port: 50001,
-    ssl: false,
-  } as const
-}
+const SPECTRUM_NODE_DEFAULTS = {
+  python_class: 'cryptoadvance.specterext.spectrum.spectrum_node.SpectrumNode',
+  fullpath: '/data/.specter/nodes/spectrum_node.json',
+  name: 'Spectrum Node',
+  alias: 'spectrum_node',
+  port: 50001,
+  ssl: false,
+} as const
 
 export const inputSpec = InputSpec.of({
   node: Value.union({
     name: i18n('Node'),
     description: i18n(
-      'Choose how Specter reaches the Bitcoin network. Bitcoin RPC talks to your Bitcoin Core or Knots node directly with no indexer and is the reliable, recommended path. Spectrum Node uses an Electrum indexer for faster wallet imports and rescans, but is experimental and currently less reliable than the direct RPC backend.',
+      'Choose how Specter reaches the Bitcoin network. Bitcoin RPC talks to your Bitcoin node directly with no indexer and is the reliable, recommended path. Spectrum Node uses an Electrum indexer for faster wallet imports and rescans, but is experimental and currently less reliable than the direct RPC backend.',
     ),
     default: 'bitcoin_core',
     variants: Variants.of({
@@ -109,7 +108,7 @@ export const selectNode = sdk.Action.withInput(
         spectrum_backend: backend,
         bitcoind: false,
       })
-      await spectrumNodeJson.write(effects, spectrumDefaults(backend))
+      await spectrumNodeJson.write(effects, SPECTRUM_NODE_DEFAULTS)
 
       return {
         version: '1',
@@ -166,9 +165,12 @@ export const selectNode = sdk.Action.withInput(
       {
         input: {
           kind: 'partial',
-          value: { username, password },
+          accept: [{ username, password }],
+          set: { username, password },
         },
-        reason: i18n('Specter needs dependency-scoped Bitcoin RPC credentials.'),
+        reason: i18n(
+          'Specter needs dependency-scoped Bitcoin RPC credentials.',
+        ),
       },
     )
 

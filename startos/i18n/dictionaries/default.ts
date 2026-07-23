@@ -12,7 +12,7 @@ const dict = {
 
   // actions/selectNode.ts — input spec
   Node: 20,
-  'Choose how Specter reaches the Bitcoin network. Bitcoin RPC talks to your Bitcoin Core or Knots node directly with no indexer and is the reliable, recommended path. Spectrum Node uses an Electrum indexer for faster wallet imports and rescans, but is experimental and currently less reliable than the direct RPC backend.': 21,
+  'Choose how Specter reaches the Bitcoin network. Bitcoin RPC talks to your Bitcoin node directly with no indexer and is the reliable, recommended path. Spectrum Node uses an Electrum indexer for faster wallet imports and rescans, but is experimental and currently less reliable than the direct RPC backend.': 21,
   'Bitcoin RPC (recommended)': 22,
   'Spectrum Node (experimental)': 23,
   'Spectrum Backend': 24,

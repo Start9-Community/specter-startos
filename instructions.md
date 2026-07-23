@@ -8,13 +8,13 @@
 
 Specter on StartOS supports two backends. Pick one with the **Select Node** action; you can re-run the action any time to switch.
 
-Both options ultimately need Bitcoin Core (or Knots) running on your server — the difference is whether Specter talks to it directly or through an Electrum indexer that sits in front of it.
+Both options ultimately need a Bitcoin node running on your server — the difference is whether Specter talks to it directly or through an Electrum indexer that sits in front of it.
 
 ### Bitcoin RPC (recommended)
 
-Direct RPC against your Bitcoin node. No extra indexer in the picture — Specter talks straight to Bitcoin Core or Knots over the local service network. This is the reliable, default path and the one we recommend for almost everyone.
+Direct RPC against your Bitcoin node. No extra indexer in the picture — Specter talks straight to your Bitcoin node over the local service network. This is the reliable, default path and the one we recommend for almost everyone.
 
-Trade-off: Bitcoin Core has no per-address index, so wallet imports and rescans walk the full block range. That's slow on full nodes and unworkable past the prune horizon. For day-to-day use of an already-imported wallet, this is a non-issue.
+Trade-off: a Bitcoin node has no per-address index, so wallet imports and rescans walk the full block range. That's slow on full nodes and unworkable past the prune horizon. For day-to-day use of an already-imported wallet, this is a non-issue.
 
 ### Spectrum Node (experimental)
 

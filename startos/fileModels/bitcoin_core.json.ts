@@ -10,8 +10,8 @@ const shape = z.object({
   datadir: z.literal(''),
   user: z.string(),
   password: z.string(),
-  port: z.literal('8332'),
-  host: z.literal('bitcoind.startos').catch('bitcoind.startos'),
+  port: z.string().catch('8332'),
+  host: z.string().optional().catch(undefined),
   protocol: z.literal('http'),
   node_type: z.literal('BTC'),
 })

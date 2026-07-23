@@ -21,7 +21,7 @@ export const manifest = setupManifest({
   images: {
     specter: {
       source: {
-        dockerTag: 'ghcr.io/cryptoadvance/specter-desktop:v2.1.9',
+        dockerTag: 'ghcr.io/cryptoadvance/specter-desktop:v2.1.10',
       },
       arch: ['x86_64', 'aarch64'],
     },
@@ -31,7 +31,7 @@ export const manifest = setupManifest({
       description: bitcoindDescription,
       optional: true,
       metadata: {
-        title: 'Bitcoin Core',
+        title: 'Bitcoin',
         icon: 'https://raw.githubusercontent.com/Start9Labs/bitcoin-core-startos/master/icon.svg',
       },
     },
