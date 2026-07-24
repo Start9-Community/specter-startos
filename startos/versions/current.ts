@@ -1,7 +1,7 @@
 import { VersionInfo, IMPOSSIBLE } from '@start9labs/start-sdk'
 
 export const current = VersionInfo.of({
-  version: '2.1.10:0',
+  version: '2.1.10:1',
   releaseNotes: {
     en_US:
       'Updated Specter to 2.1.10. Bumps the hardware-wallet interface (HWI) to 3.1.0 and Spectrum to 0.8.0. See the upstream release notes: https://github.com/cryptoadvance/specter-desktop/releases/tag/v2.1.10. Also includes internal updates for start-sdk 2.0.',
