@@ -6,7 +6,7 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "@start9labs/start-sdk": "2.0.7",
+    "@start9labs/start-sdk": "2.0.9",
     "bitcoin-core-startos": "github:Start9Labs/bitcoin-core-startos#next/28.x",
     "electrs-startos": "github:Start9-Community/electrs-startos#next",
     "fulcrum-startos": "github:Start9Labs/fulcrum-startos#next"
@@ -22,5 +22,8 @@
     "tabWidth": 2,
     "semi": false,
     "singleQuote": true
+  },
+  "overrides": {
+    "@start9labs/start-sdk": "$@start9labs/start-sdk"
   }
 }
