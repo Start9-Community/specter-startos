@@ -3,13 +3,13 @@ import { configJson } from './fileModels/config.json'
 import { spectrumNodeJson } from './fileModels/spectrum_node.json'
 import { i18n } from './i18n'
 import { sdk } from './sdk'
-import { bridgeAddress, btcRpcBinding, electrumBinding, uiPort } from './utils'
+import { btcRpcBinding, electrumBinding, uiPort } from './utils'
 
 export const main = sdk.setupMain(async ({ effects }) => {
   console.info('Starting Specter!')
 
   // Point specter's node config at the active backend's live LXC-bridge
-  // address before the daemon reads it. The bridgeAddress `.const()` restarts
+  // address before the daemon reads it. The getBridgeAddress `.const()` restarts
   // specter only when that address actually changes (dependency
   // install/uninstall/port-change), never on a dependency update; while the
   // dependency is absent the address is null and we leave the node file's host
@@ -20,7 +20,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
     .catch(() => null)
 
   if (config?.active_node_alias === 'bitcoin_core') {
-    const addr = await bridgeAddress(effects, btcRpcBinding).const()
+    const addr = await sdk.host.getBridgeAddress(effects, btcRpcBinding).const()
     if (addr) {
       const [host, port] = addr.split(':')
       await bitcoinCoreJson.merge(effects, { host, port })
@@ -30,7 +30,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
       electrumBinding[
         config.spectrum_backend === 'fulcrum' ? 'fulcrum' : 'electrs'
       ]
-    const addr = await bridgeAddress(effects, binding).const()
+    const addr = await sdk.host.getBridgeAddress(effects, binding).const()
     if (addr) {
       const [host, port] = addr.split(':')
       await spectrumNodeJson.merge(effects, { host, port: Number(port) })
