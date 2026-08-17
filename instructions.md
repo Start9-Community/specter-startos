@@ -29,7 +29,10 @@ The first time the chosen indexer installs, it will sync against your Bitcoin no
 
 ## Hardware Wallets
 
-For hardware wallet usage on StartOS, see <https://docs.start9.com/latest/user-manual/service-guides/specter/specter-service>.
+Specter runs on your server, so a hardware wallet plugged into the machine you are browsing from is not visible to it over USB. Two ways round that:
+
+- **Air-gapped signing** works with no extra setup — QR codes with SeedSigner, Specter DIY or Keystone, or an SD card with a Coldcard. Nothing needs to reach the device over USB.
+- **HWIBridge** relays USB to your server. Run Specter locally with `--hwibridge`, open `http://127.0.0.1:25441/hwi/settings` — recent versions ask you to log in as an admin first — and whitelist your server's domain. Then in Specter on StartOS go to **Settings → USB Devices**, choose **Remote Specter USB connection**, save, and use **Test connection**. Ad blockers and Brave's shields can silently block the relay. See [Specter HWIBridge](https://docs.specter.solutions/desktop/hwibridge/).
 
 ## Mempool as Block Explorer
 
