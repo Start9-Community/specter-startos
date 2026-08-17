@@ -4,13 +4,15 @@
 
 # Specter on StartOS
 
-> **Upstream docs:** <https://docs.specter.solutions/>
->
 > Everything not listed in this document should behave the same as upstream
-> Specter Desktop. If a feature, setting, or behavior is not mentioned here,
-> the upstream documentation is accurate and fully applicable.
+> Specter Desktop. If a feature, setting, or behavior is not mentioned here, the
+> upstream documentation is accurate and fully applicable — see the
+> Documentation section of `instructions.md` for links.
 
-A Bitcoin wallet UI focused on multisig and hardware wallet workflows. See the [upstream repo](https://github.com/cryptoadvance/specter-desktop) for general Specter documentation.
+[Specter Desktop](https://github.com/cryptoadvance/specter-desktop) is a wallet interface for Bitcoin multisig and hardware wallets, run against your own node. This package wires it to whichever backend you pick — Bitcoin Core over RPC, or an Electrum indexer — and writes that backend's address into Specter's own node files at every start.
+
+- **Upstream repo:** <https://github.com/cryptoadvance/specter-desktop>
+- **Wrapper repo:** <https://github.com/Start9-Community/specter-startos>
 
 ---
 
@@ -18,137 +20,197 @@ A Bitcoin wallet UI focused on multisig and hardware wallet workflows. See the [
 
 - [Image and Container Runtime](#image-and-container-runtime)
 - [Volume and Data Layout](#volume-and-data-layout)
-- [Installation and First-Run Flow](#installation-and-first-run-flow)
-- [Configuration Management](#configuration-management)
-- [Network Access and Interfaces](#network-access-and-interfaces)
-- [Actions (StartOS UI)](#actions-startos-ui)
-- [Backups and Restore](#backups-and-restore)
-- [Health Checks](#health-checks)
+- [File Models](#file-models)
 - [Dependencies](#dependencies)
+- [Network Access and Interfaces](#network-access-and-interfaces)
+- [Installation and First-Run Flow](#installation-and-first-run-flow)
+- [Actions](#actions)
+- [Tasks](#tasks)
+- [Health Checks](#health-checks)
+- [Backups and Restore](#backups-and-restore)
 - [Limitations and Differences](#limitations-and-differences)
-- [What Is Unchanged from Upstream](#what-is-unchanged-from-upstream)
 - [Quick Reference for AI Consumers](#quick-reference-for-ai-consumers)
 
 ---
 
 ## Image and Container Runtime
 
-| Property | Value |
-|----------|-------|
-| Image | Upstream `ghcr.io/cryptoadvance/specter-desktop` |
-| Architectures | x86_64, aarch64 |
-| Entrypoint | `python3 -m cryptoadvance.specter server --host 0.0.0.0` |
+One upstream image, consumed unmodified.
+
+| Property      | Value                                     |
+| ------------- | ----------------------------------------- |
+| Image         | `ghcr.io/cryptoadvance/specter-desktop`   |
+| Architectures | x86_64, aarch64                           |
+| Command       | Specter's server, against the data folder |
+
+| Subcontainer  | Purpose                                  |
+| ------------- | ---------------------------------------- |
+| `specter-sub` | The only daemon — the one to `attach` to |
+
+One oneshot runs first, giving the data folder to the unprivileged user Specter runs as.
 
 ## Volume and Data Layout
 
-| Volume | Mount Point | Purpose |
-|--------|-------------|---------|
-| `main` | `/data` | All Specter data (`.specter/`) |
+One volume.
 
-StartOS-specific files written to the `main` volume:
+| Volume | Mount Point | Purpose               |
+| ------ | ----------- | --------------------- |
+| `main` | `/data`     | Specter's data folder |
 
-| File | Purpose |
-|------|---------|
-| `.specter/config.json` | Tracks the selected backend (Bitcoin RPC vs Spectrum Node) and the chosen Spectrum sub-backend. Managed by the Select Node action. |
-| `.specter/nodes/bitcoin_core.json` | Bitcoin RPC node entry — host, port, protocol, and the dependency-scoped RPC user/password generated for Specter. |
-| `.specter/nodes/spectrum_node.json` | Spectrum Node entry pointing at the selected Electrum backend (electrs or Fulcrum), resolved to its address on the StartOS service (LXC) bridge. |
+| Path                                | Written by | Holds                             |
+| ----------------------------------- | ---------- | --------------------------------- |
+| `.specter/config.json`              | The action | Which backend is selected         |
+| `.specter/nodes/bitcoin_core.json`  | Both       | The Bitcoin Core node definition  |
+| `.specter/nodes/spectrum_node.json` | Both       | The Electrum node definition      |
+| `.specter/migration_data.json`      | Init       | Which of Specter's migrations ran |
+| `.specter/` (the rest)              | Specter    | Wallets, devices, and settings    |
 
-## Installation and First-Run Flow
+**This volume holds your wallet definitions** — the descriptors and device records that make your funds spendable. Specter is watch-only, so there are no private keys here, but a lost descriptor is a lost wallet even when the seed survives.
 
-1. On first install (or any time `config.json.active_node_alias` is unset) StartOS creates a **critical task** prompting the user to run **Select Node**.
-2. **Select Node** defaults to **Bitcoin RPC** — the reliable, recommended path. The user can switch the variant to **Spectrum Node** (experimental) and, within Spectrum, choose Fulcrum or electrs as the backend.
-3. When **Bitcoin RPC** is chosen, Specter generates a fresh dependency-scoped RPC username/password and dispatches `generate-rpc-dependent` to the `bitcoind` service so the credentials are appended to its `rpcauth`. If a `bitcoin_core.json` already contains usable credentials, they are reused instead.
-4. When **Spectrum Node** is chosen, the Spectrum Node entry is wired to the selected indexer (Fulcrum or electrs), reached at its plain-TCP Electrum address over the StartOS service (LXC) bridge (TLS off). The chosen indexer in turn requires a Bitcoin node — that's a dependency of the indexer, not of Specter directly.
-5. Specter starts and serves its web UI on port 25441.
+## File Models
 
-## Configuration Management
+Four models, and two of them exist to fight upstream behavior rather than to configure anything.
 
-| StartOS-Managed | Details |
-|-----------------|---------|
-| Active backend | Bitcoin RPC vs Spectrum Node — set by the Select Node action |
-| Spectrum sub-backend | electrs or Fulcrum, when Spectrum Node is selected |
-| `bitcoin_core.json` host/port/protocol | bitcoind's RPC address, resolved over the StartOS service (LXC) bridge, over HTTP |
-| Bitcoin RPC credentials | Generated and registered on the bitcoind service via `generate-rpc-dependent`; reused if already present |
-| `spectrum_node.json` host/port | The selected indexer's Electrum address, resolved over the StartOS service (LXC) bridge, `ssl: false` |
+| File                  | Format | Modelled                | Written by         |
+| --------------------- | ------ | ----------------------- | ------------------ |
+| `config.json`         | JSON   | Yes — `FileHelper.json` | The action         |
+| `bitcoin_core.json`   | JSON   | Yes — `FileHelper.json` | The action, `main` |
+| `spectrum_node.json`  | JSON   | Yes — `FileHelper.json` | The action, `main` |
+| `migration_data.json` | JSON   | Yes — `FileHelper.json` | Init               |
 
-Everything else (wallet creation, multisig, devices, fees, block-explorer URLs, etc.) is configured through Specter's own web UI.
+The first records which backend is active. The two node files are Specter's own node definitions, with their class, path, name and alias **pinned as literals** — they identify the node to Specter, and a changed value is repaired on read.
 
-## Network Access and Interfaces
+**The backend's address is resolved at start, not stored.** `main` looks up the selected dependency's binding over the internal bridge and writes the host and port into the matching node file before the daemon reads it. The read is reactive, so a dependency being installed, removed, or moved to a different port updates the file and restarts Specter — but a dependency _update_ does not.
 
-| Interface | Port | Protocol | Purpose |
-|-----------|------|----------|---------|
-| Web UI | 25441 | HTTP | Specter web interface |
+**While the dependency is absent the host is left unset** rather than written as a placeholder, so Specter simply fails to connect until the address resolves.
 
-## Actions (StartOS UI)
-
-### Select Node
-
-- **Name:** Select Node
-- **Purpose:** Choose the Bitcoin backend Specter should connect to
-- **Visibility:** Enabled (always visible)
-- **Availability:** Any status
-- **Inputs:**
-  - **Node** — `Bitcoin RPC (recommended)` (default) or `Spectrum Node (experimental)`
-  - **Spectrum Backend** — `Fulcrum` (default) or `electrs`. Only shown when the Spectrum Node variant is selected.
-- **Outputs:** A success message describing what was configured
-
-## Backups and Restore
-
-**Backed up:** the entire `main` volume — wallet metadata, the `.specter` configuration tree, and the StartOS-managed node entries described above.
-
-**Restore behavior:** Standard restore. After restore, the configured backend must be installed and running. If `config.json.active_node_alias` is missing, the install task re-prompts the user to run Select Node.
-
-## Health Checks
-
-| Check | Method | Messages |
-|-------|--------|----------|
-| Web Interface | Port listening on 25441 | Success: "The web interface is ready" / Error: "The web interface is not ready" |
+**The migration file is pre-seeded, and that is a workaround.** Specter runs two migrations unconditionally on its first daemon start, and the second rewrites every node file into one of two classes it knows about — neither of which is the Electrum node type this package uses, so it clobbers that file every time. The package marks both migrations as already executed so the migrator skips them. Both are no-ops on a fresh volume anyway: the first only acts on a legacy data directory that cannot exist here, and the second only does the damage described. It is written **only when no migration file exists**, so real migration history on an update or restore is preserved.
 
 ## Dependencies
 
-| Dependency | Required | Version | Health checks | Purpose |
-|------------|----------|---------|---------------|---------|
-| Bitcoin (`bitcoind`) | Optional | `>=28.3:0` | `bitcoind`, `sync-progress` | Native RPC backend (satisfied by Bitcoin Core or Bitcoin Knots, which share the `bitcoind` package id) |
-| `electrs` | Optional | `>=0.10.0:0` | `electrs`, `sync` | Electrum server reached via Spectrum Node |
-| `fulcrum` | Optional | `>=2.1.0:0` | `primary`, `sync-progress` | High-performance Electrum server reached via Spectrum Node |
+Three declared, **exactly one active** — whichever backend is selected.
 
-The active dependency is determined at runtime from `config.json`. Exactly one of the three is required and must be running, depending on the user's Select Node choice.
+| Dependency | Required         | Health checks required      | Why                  |
+| ---------- | ---------------- | --------------------------- | -------------------- |
+| Bitcoin    | Only if selected | `bitcoind`, `sync-progress` | The node, over RPC   |
+| electrs    | Only if selected | `electrs`, `sync`           | The Electrum backend |
+| Fulcrum    | Only if selected | `primary`, `sync-progress`  | The Electrum backend |
+
+**Every one of them is gated on being synced, not just running.** A backend that answers but has not caught up reports wrong balances, which for a wallet interface is worse than not connecting at all.
+
+**Nothing is depended on until a backend is chosen.** The dependency set is derived from the selection, so an unconfigured install has no dependencies and asks for none.
+
+Choosing Bitcoin Core takes RPC credentials; choosing an Electrum backend does not, because Specter's Electrum client needs none.
+
+## Network Access and Interfaces
+
+One interface.
+
+| Interface | Id   | Type | Port  | Description               |
+| --------- | ---- | ---- | ----- | ------------------------- |
+| Web UI    | `ui` | ui   | 25441 | The Specter web interface |
+
+Bound on the `main` MultiHost over HTTP and not masked.
+
+**Specter's own authentication gates it**, and it is configured inside the application — Specter can run with no authentication at all, which is its default until you set it. **Set it before exposing this address anywhere**, because the interface shows every wallet's balances and can construct transactions for signing.
+
+## Installation and First-Run Flow
+
+Install seeds the migration file and raises a `critical` task: choose a backend.
+
+**The service cannot start until one is chosen**, which is right — Specter with no node has nothing to show, and the choice is what determines which dependency is required.
+
+Choosing Bitcoin Core **generates dedicated RPC credentials and asks Bitcoin for them on your behalf**: it raises a critical task on the Bitcoin package pre-filled with a generated username and password, so the credential is scoped to Specter rather than shared. If credentials already exist in the node file they are reused instead.
+
+Choosing an Electrum backend writes the node definition and needs no credential.
+
+Once the backend is running and synced, Specter starts, and the rest — wallets, devices, authentication — is set up inside the application.
+
+## Actions
+
+One action.
+
+### Select Node
+
+Chooses the backend: Bitcoin Core, or Spectrum with electrs or Fulcrum behind it.
+
+- **What it changes:** the active selection, the matching node definition, and through them the dependency set.
+- **Cost:** the service restarts, and will not start again until the newly selected dependency is running and synced.
+- **Repeat safety:** idempotent, pre-filled with the current selection.
+- **Switching to Bitcoin Core reuses existing RPC credentials** when the node file already has them, and otherwise generates a new pair and raises the task on Bitcoin.
+- **Runnable at any status**, including before the first start — which is how the install-time task is completed.
+
+## Tasks
+
+One, and it is reactive.
+
+| Task        | Severity   | Raised when                        | Cleared when    |
+| ----------- | ---------- | ---------------------------------- | --------------- |
+| Select Node | `critical` | Any init that finds no backend set | The action runs |
+
+`critical` blocks the service from starting and suspends the ordinary controls, so a fresh install shows the task and nothing else.
+
+Selecting Bitcoin Core may raise a second `critical` task — **on the Bitcoin package, not this one** — asking it to create the RPC user Specter generated.
+
+## Health Checks
+
+One check, on the only daemon.
+
+| Check     | Displayed as    | Method                  |
+| --------- | --------------- | ----------------------- |
+| `primary` | "Web Interface" | Port 25441 is listening |
+
+It reports that the interface is serving. **It says nothing about the backend**: a node that is unreachable, a wrong RPC credential, or an indexer that fell behind all show a green check and an error inside Specter.
+
+## Backups and Restore
+
+The `main` volume is copied wholesale — `sdk.Backups.ofVolumes('main')`. That is the wallet definitions, the device records, the node configuration, and Specter's own settings.
+
+**Watch-only, but not worthless.** There are no private keys here, so the backup cannot spend — but it holds the descriptors and multisig configurations without which a set of seeds is very hard to reconstruct into the same wallet. It also holds the Bitcoin RPC credential.
+
+A restored instance comes back with the same wallets and the same backend selection, and re-resolves the backend's address on the new server.
 
 ## Limitations and Differences
 
-1. **Backend choice is a one-shot selection** — switching backends requires re-running the Select Node action.
-2. **Spectrum endpoint uses plain TCP with TLS off** — the indexer's bridge address is resolved automatically; not user-configurable from inside Specter.
-3. **Bitcoin RPC uses bitcoind's bridge address over HTTP** — same reason; users do not enter RPC details manually.
-4. **No HWI Bridge integration** — Specter runs server-only; hardware wallet support is via Specter's web UI flows (USB pass-through is not provided by the StartOS package).
+1. **A backend must be selected before the service will start.**
+2. **Only one backend at a time**, and switching restarts and re-depends.
+3. **Specter's own authentication is off until you configure it** inside the application.
+4. **The backend must be synced**, not merely running, before Specter starts.
+5. **Two of Specter's own migrations are suppressed** by a pre-seeded migration file; without that, the Electrum node definition is destroyed on first start.
+6. **The node files are partly pinned** — class, path, name and alias are repaired on read, so they cannot be repurposed by hand.
+7. **Watch-only.** Signing happens on a hardware device or another wallet; Specter constructs and coordinates.
 
-## What Is Unchanged from Upstream
-
-- All wallet, multisig, and PSBT workflows
-- Hardware wallet integration via the Specter web UI
-- Tor / proxy settings, block-explorer URL settings, language, and other Specter settings
-- Wallet import/export, descriptor handling, and the Specter API
+---
 
 ## Quick Reference for AI Consumers
 
 ```yaml
 package_id: specter
-architectures: [x86_64, aarch64]
+image: ghcr.io/cryptoadvance/specter-desktop
+architectures:
+  - x86_64
+  - aarch64
+subcontainers:
+  - specter-sub
 volumes:
-  main: /data
-ports:
-  ui: 25441
+  main: /data # Specter's data folder is /data/.specter
+file_models:
+  - .specter/config.json # active_node_alias, spectrum_backend
+  - .specter/nodes/bitcoin_core.json # host/port written at start; class/alias pinned
+  - .specter/nodes/spectrum_node.json # same, for the Electrum backend
+  - .specter/migration_data.json # pre-seeded to suppress Specter's migrations 1 and 2
+startos_managed_env_vars: [] # the backend address is written into the node files
 dependencies:
-  - bitcoind (optional)
-  - electrs (optional)
-  - fulcrum (optional)
-startos_managed_files:
-  - .specter/config.json
-  - .specter/nodes/bitcoin_core.json
-  - .specter/nodes/spectrum_node.json
+  - bitcoind # only when selected; healthChecks: [bitcoind, sync-progress]
+  - electrs # only when selected; healthChecks: [electrs, sync]
+  - fulcrum # only when selected; healthChecks: [primary, sync-progress]
+interfaces:
+  ui: { type: ui, port: 25441 } # Specter's own auth, off by default until configured
 actions:
   - select-node
+tasks:
+  - { action: select-node, severity: critical } # reactive
+  # selecting Bitcoin Core also raises a critical task on the bitcoind package
 health_checks:
-  - port_listening: 25441
-backup_volumes:
-  - main
+  - primary # displayed "Web Interface"; says nothing about the backend
 ```
