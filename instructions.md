@@ -2,6 +2,7 @@
 
 ## Documentation
 
+- [Start9 Bitcoin Guides](https://docs.start9.com/bitcoin-guides/) — connecting a wallet to your own Bitcoin node or Electrum server, and which wallets work on which platforms.
 - [Specter Desktop documentation](https://docs.specter.solutions/) — the upstream user guide for wallets, multisig, devices, and the Specter API.
 
 ## Choosing a Backend
