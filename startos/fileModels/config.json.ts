@@ -1,7 +1,7 @@
 import { FileHelper, z } from '@start9labs/start-sdk'
 import { sdk } from '../sdk'
 
-const shape = z.object({
+const shape = z.looseObject({
   active_node_alias: z
     .union([z.literal('bitcoin_core'), z.literal('spectrum_node'), z.null()])
     .catch(null),

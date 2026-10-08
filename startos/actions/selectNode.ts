@@ -39,7 +39,7 @@ export const inputSpec = InputSpec.of({
   node: Value.union({
     name: i18n('Node'),
     description: i18n(
-      'Choose how Specter reaches the Bitcoin network. Bitcoin RPC talks to your Bitcoin node directly with no indexer and is the reliable, recommended path. Spectrum Node uses an Electrum indexer for faster wallet imports and rescans, but is experimental and currently less reliable than the direct RPC backend.',
+      '- Bitcoin RPC: Specter talks to your Bitcoin node directly, with no indexer. Importing or rescanning a wallet walks the block range.\n- Spectrum Node: Specter queries an Electrum server, Fulcrum or electrs, which indexes addresses, so wallet imports and rescans are faster. It is experimental and currently less reliable than Bitcoin RPC.',
     ),
     default: 'bitcoin_core',
     variants: Variants.of({
@@ -53,7 +53,7 @@ export const inputSpec = InputSpec.of({
           backend: Value.select({
             name: i18n('Spectrum Backend'),
             description: i18n(
-              'Electrum server that Spectrum Node queries. Fulcrum is faster on chunky wallet histories; electrs is lighter and quicker to sync from scratch.',
+              'The chosen server must be installed and synced before Specter starts.\n- Fulcrum: Spectrum Node queries the Fulcrum service\n- electrs: Spectrum Node queries the electrs service',
             ),
             default: 'fulcrum',
             values: {

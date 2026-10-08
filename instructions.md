@@ -19,12 +19,9 @@ Trade-off: a Bitcoin node has no per-address index, so wallet imports and rescan
 
 ### Spectrum Node (experimental)
 
-Specter talks the Electrum protocol via its built-in Spectrum Node, backed by either:
+Specter talks the Electrum protocol via its built-in Spectrum Node, backed by either Fulcrum or electrs.
 
-- **Fulcrum** — fastest queries on chunky wallet histories. Heavier on disk and RAM; best on larger servers.
-- **electrs** — lighter, quicker initial sync, smaller index. Good fit for modest hardware.
-
-Why pick this? An Electrum indexer makes importing an existing or multisig wallet land in seconds instead of taking a full chain walk. The catch: the Spectrum Node backend in Specter is still experimental and currently less reliable than the direct Bitcoin RPC path — expect rough edges. Choose it if fast wallet imports matter more to you than maximum stability.
+Why pick this? An Electrum indexer lets Specter import an existing or multisig wallet without a full chain walk. The catch: the Spectrum Node backend in Specter is still experimental and currently less reliable than the direct Bitcoin RPC path — expect rough edges. Choose it if fast wallet imports matter more to you than maximum stability.
 
 The first time the chosen indexer installs, it will sync against your Bitcoin node before Specter can use it.
 
