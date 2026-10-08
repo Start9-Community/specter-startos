@@ -13,19 +13,19 @@ import { sdk } from '../sdk'
 // them. Both migrations are no-ops on a fresh StartOS volume anyway
 // (_0001 only acts if a legacy `~/.specter/.bitcoin` exists; _0002 mangles
 // node files).
-const execution = z.object({
+const execution = z.looseObject({
   timestamp: z.string(),
   migration_id: z.number().int(),
   status: z.literal('completed'),
   executing_version: z.string(),
 })
 
-const event = z.object({
+const event = z.looseObject({
   timestamp: z.string(),
   version: z.string(),
 })
 
-const shape = z.object({
+const shape = z.looseObject({
   events: z.array(event),
   migration_executions: z.array(execution),
 })

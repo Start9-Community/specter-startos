@@ -12,11 +12,11 @@ const dict = {
 
   // actions/selectNode.ts — input spec
   Node: 20,
-  'Choose how Specter reaches the Bitcoin network. Bitcoin RPC talks to your Bitcoin node directly with no indexer and is the reliable, recommended path. Spectrum Node uses an Electrum indexer for faster wallet imports and rescans, but is experimental and currently less reliable than the direct RPC backend.': 21,
+  '- Bitcoin RPC: Specter talks to your Bitcoin node directly, with no indexer. Importing or rescanning a wallet walks the block range.\n- Spectrum Node: Specter queries an Electrum server, Fulcrum or electrs, which indexes addresses, so wallet imports and rescans are faster. It is experimental and currently less reliable than Bitcoin RPC.': 21,
   'Bitcoin RPC (recommended)': 22,
   'Spectrum Node (experimental)': 23,
   'Spectrum Backend': 24,
-  'Electrum server that Spectrum Node queries. Fulcrum is faster on chunky wallet histories; electrs is lighter and quicker to sync from scratch.': 25,
+  'The chosen server must be installed and synced before Specter starts.\n- Fulcrum: Spectrum Node queries the Fulcrum service\n- electrs: Spectrum Node queries the electrs service': 25,
   Fulcrum: 26,
   electrs: 27,
 

@@ -18,17 +18,24 @@ Freshly scaffolded? Work the
 guide page, not a file in this repo — read it, don't copy it in.
 
 Keep `README.md` (technical reference for an AI support or administering agent) and
-`instructions.md` (end-user docs) in sync with your changes.
+`instructions.md` (end-user docs) in sync with your changes. This file restates neither:
+whoever changes the package has both, so it carries only what they don't — repo mechanics,
+a change that looks right and is not, where the next thing gets added, a naming trap, a
+build or test invocation particular to this repo.
 
-**Bugs and feature requests are GitHub issues on this repo** — file them as you find them.
+**Fix a defect you spot rather than reporting it** — you have the package open and the
+context to be sure. File **a GitHub issue on this repo** only when the call isn't yours to
+make: you can't pin the cause down, two defensible fixes exist, or it's too large to ride on
+the work in hand. An open issue is a report, not a queue — implement one when you're asked
+to or when it's labelled `Approved`, then close it with `Closes #<n>`.
+
 Don't record work in the repo instead: no `TODO.md`, no `NOTES.md`, no `PLAN.md`. What you
 verified, tried, and decided belongs in the commit message and the PR body.
 
 ## This repo
 
-- **Backend addresses come from `sdk.host.getBridgeAddress`, resolved per start** and written into the node file before the daemon reads it. `ssl: false` on every binding — bitcoind's RPC and both Electrum servers are dialed plaintext. **Leave `host` unset when the address is null** rather than writing a placeholder; the `.const()` heals it when the dependency appears.
-- **Dependency host ids and ports are imported from the dependencies' own `utils.ts`**, not hardcoded — electrs binds Electrum on its `electrum` host, Fulcrum on `main`. Keep the imports.
-- **Every backend dependency requires a sync check, not just `running`.** A backend that answers while still catching up reports wrong balances, which is worse for a wallet interface than not connecting.
-- **The node files' `python_class`, `fullpath`, `name` and `alias` are `z.literal` pins** — Specter identifies a node by them, so a hand-edit is repaired on read.
-- **Bitcoin RPC credentials are generated here and requested from bitcoind** via `sdk.action.createTask` against its `generate-rpc-dependent` action, pre-filled and `accept`-locked. Existing credentials in the node file are reused rather than regenerated — don't rotate on every selection.
-- **The `chown` oneshot is required.** The image runs as `specter` and the volume arrives root-owned.
+- **Leave a node file's `host` unset while the dependency's bridge address is null** — don't write a placeholder; main's `.const()` fills it when the dependency appears.
+- **Import dependency host ids and ports from the dependencies' own `startos/utils.ts`** — don't hardcode them.
+- **Keep each backend's sync health check in `startos/dependencies.ts`** — don't relax a dependency to bare `running`.
+- **Don't regenerate Bitcoin RPC credentials on every Select Node** — existing ones in `bitcoin_core.json` are reused deliberately.
+- **Don't drop the `chown` oneshot** — the image runs as `specter` and the volume arrives root-owned.
