@@ -36,7 +36,10 @@ export const resetPassword = sdk.Action.withoutInput(
       charset: 'a-z,A-Z,0-9',
       len: 22,
     })
-    await setAdminPassword(effects, hashAdminPassword(password))
+    const username = await setAdminPassword(
+      effects,
+      hashAdminPassword(password),
+    )
     if (
       (await configJson.read((c) => c.auth?.method).once()) !==
       'usernamepassword'
@@ -50,15 +53,32 @@ export const resetPassword = sdk.Action.withoutInput(
       version: '1',
       title: i18n('Success'),
       message: i18n(
-        'Your Specter admin password is below. Save it to a password manager. If Specter asks for a username, it is "admin".',
+        'Your Specter admin password is below. Save it to a password manager. Specter asks for the username only if it is set to sign in with username and password.',
       ),
       result: {
-        type: 'single',
-        value: password,
-        masked: true,
-        copyable: true,
-        qr: false,
-        launchable: false,
+        type: 'group',
+        value: [
+          {
+            type: 'single',
+            name: i18n('Username'),
+            description: null,
+            value: username,
+            masked: false,
+            copyable: true,
+            qr: false,
+            launchable: false,
+          },
+          {
+            type: 'single',
+            name: i18n('Password'),
+            description: null,
+            value: password,
+            masked: true,
+            copyable: true,
+            qr: false,
+            launchable: false,
+          },
+        ],
       },
     }
   },

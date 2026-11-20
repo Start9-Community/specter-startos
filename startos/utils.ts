@@ -87,4 +87,5 @@ export const setAdminPassword = async (
       z.looseObject({}),
     ).write(effects, {})
   }
+  return updated.username
 }

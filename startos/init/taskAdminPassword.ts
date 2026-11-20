@@ -9,7 +9,7 @@ export const taskAdminPassword = sdk.setupOnInit(async (effects) => {
   const isSet = await storeJson.read((s) => s.adminPasswordSet).const(effects)
   if (isSet) return
 
-  if (isSet === undefined) {
+  if (isSet == null) {
     const method = await configJson.read((c) => c.auth?.method).once()
     if (method && method !== 'none') {
       await storeJson.merge(effects, { adminPasswordSet: true })

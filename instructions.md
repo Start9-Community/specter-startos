@@ -7,7 +7,7 @@
 
 ## Signing In
 
-Specter asks for a password before it shows anything. Run the **Create Admin Password** action to get it — it is shown once, so save it to a password manager — then enter it on Specter's login page. If Specter is set to ask for a username too, it is `admin`.
+Specter asks for a password before it shows anything. Run the **Create Admin Password** action to get it — it is shown once, so save it to a password manager — then enter it on Specter's login page. If Specter is set to ask for a username too, use the one the action shows.
 
 Forgot it? Run **Reset Admin Password** for a new one. It restarts Specter, and erases any Swan connection you set up in Specter, which you then reconnect; wallets and devices are kept.
 

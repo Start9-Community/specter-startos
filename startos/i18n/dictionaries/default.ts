@@ -39,7 +39,9 @@ const dict = {
   'Generate a new password for the Specter admin account': 52,
   'Generate the password for the Specter admin account': 53,
   'Replaces the current admin password and restarts Specter if it is running. Swan credentials Specter stored under the old password are erased.': 54,
-  'Your Specter admin password is below. Save it to a password manager. If Specter asks for a username, it is "admin".': 55,
+  'Your Specter admin password is below. Save it to a password manager. Specter asks for the username only if it is set to sign in with username and password.': 55,
+  Username: 56,
+  Password: 57,
 
   // init/taskAdminPassword.ts
   'Create a password to sign in to Specter': 60,

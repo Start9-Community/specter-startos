@@ -144,15 +144,16 @@ Chooses the backend: Bitcoin Core, or Spectrum with electrs or Fulcrum behind it
 - **Cost:** the service restarts, and will not start again until the newly selected dependency is running and synced.
 - **Repeat safety:** idempotent, pre-filled with the current selection.
 - **Switching to Bitcoin Core reuses existing RPC credentials** when the node file already has them, and otherwise generates a new pair and raises the task on Bitcoin.
+- **Preserves authentication and Specter's other settings** in `config.json`, merging only the node fields.
 - **Runnable at any status**, including before the first start — which is how the install-time task is completed.
 
 ### Create Admin Password / Reset Admin Password
 
-Generates a 22-character admin password and shows it once, masked and copyable. Named **Create** until it has run, **Reset** afterwards.
+Generates a 22-character admin password and shows it once, masked and copyable, with the admin account's username. Named **Create** until it has run, **Reset** afterwards.
 
-- **What it changes:** the admin entry's password hash in `users.json`, and `auth.method` to `passwordonly` unless it is `usernamepassword` (where the admin signs in as `admin` with the same password).
+- **What it changes:** the admin entry's password hash in `users.json`, and `auth.method` to `passwordonly` unless it is `usernamepassword` (where the admin signs in with that username and the same password).
 - **Cost:** restarts Specter if it is running, since Specter holds its accounts in memory and would write the old hash back.
-- **Data loss on reset:** Specter encrypts some extension data (the Swan integration's credentials) with a secret tied to the old password. A reset cannot decrypt it, so the action discards that secret and empties `.specter/admin_services.json`, as Specter itself does when its password is removed. Wallets, devices and node settings are unaffected.
+- **Data loss on reset:** Specter encrypts some extension data (the Swan integration's credentials) with a secret tied to the old password. A reset cannot decrypt it, so the action discards that secret and empties `.specter/<username>_services.json`, as Specter itself does when its password is removed. Wallets, devices and node settings are unaffected.
 - **Runnable at any status.**
 
 ## Tasks

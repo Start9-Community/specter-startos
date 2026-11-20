@@ -29,7 +29,9 @@ export default {
     52: 'Genera una nueva contraseña para la cuenta de administrador de Specter',
     53: 'Genera la contraseña para la cuenta de administrador de Specter',
     54: 'Reemplaza la contraseña de administrador actual y reinicia Specter si está en ejecución. Se borran las credenciales de Swan que Specter guardó con la contraseña anterior.',
-    55: 'Tu contraseña de administrador de Specter está abajo. Guárdala en un gestor de contraseñas. Si Specter pide un nombre de usuario, es "admin".',
+    55: 'Tu contraseña de administrador de Specter está abajo. Guárdala en un gestor de contraseñas. Specter pide el nombre de usuario solo si está configurado para iniciar sesión con usuario y contraseña.',
+    56: 'Nombre de usuario',
+    57: 'Contraseña',
     60: 'Crea una contraseña para iniciar sesión en Specter',
   },
   de_DE: {
@@ -60,7 +62,9 @@ export default {
     52: 'Erzeugt ein neues Passwort für das Specter-Admin-Konto',
     53: 'Erzeugt das Passwort für das Specter-Admin-Konto',
     54: 'Ersetzt das aktuelle Admin-Passwort und startet Specter neu, falls es läuft. Swan-Zugangsdaten, die Specter unter dem alten Passwort gespeichert hat, werden gelöscht.',
-    55: 'Dein Specter-Admin-Passwort steht unten. Speichere es in einem Passwortmanager. Falls Specter nach einem Benutzernamen fragt, lautet er "admin".',
+    55: 'Dein Specter-Admin-Passwort steht unten. Speichere es in einem Passwortmanager. Specter fragt nur nach dem Benutzernamen, wenn die Anmeldung mit Benutzername und Passwort eingestellt ist.',
+    56: 'Benutzername',
+    57: 'Passwort',
     60: 'Erstelle ein Passwort, um dich bei Specter anzumelden',
   },
   pl_PL: {
@@ -91,7 +95,9 @@ export default {
     52: 'Generuje nowe hasło do konta administratora Specter',
     53: 'Generuje hasło do konta administratora Specter',
     54: 'Zastępuje obecne hasło administratora i restartuje Specter, jeśli działa. Dane logowania Swan zapisane przez Specter pod starym hasłem zostaną usunięte.',
-    55: 'Twoje hasło administratora Specter jest poniżej. Zapisz je w menedżerze haseł. Jeśli Specter poprosi o nazwę użytkownika, jest to "admin".',
+    55: 'Twoje hasło administratora Specter jest poniżej. Zapisz je w menedżerze haseł. Specter prosi o nazwę użytkownika tylko wtedy, gdy logowanie jest ustawione na nazwę użytkownika i hasło.',
+    56: 'Nazwa użytkownika',
+    57: 'Hasło',
     60: 'Utwórz hasło, aby zalogować się do Specter',
   },
   fr_FR: {
@@ -122,7 +128,9 @@ export default {
     52: 'Génère un nouveau mot de passe pour le compte administrateur de Specter',
     53: 'Génère le mot de passe du compte administrateur de Specter',
     54: "Remplace le mot de passe administrateur actuel et redémarre Specter s'il est en cours d'exécution. Les identifiants Swan que Specter a enregistrés avec l'ancien mot de passe sont effacés.",
-    55: 'Votre mot de passe administrateur Specter est ci-dessous. Enregistrez-le dans un gestionnaire de mots de passe. Si Specter demande un nom d\'utilisateur, c\'est "admin".',
+    55: "Votre mot de passe administrateur Specter est ci-dessous. Enregistrez-le dans un gestionnaire de mots de passe. Specter ne demande le nom d'utilisateur que s'il est configuré pour la connexion par nom d'utilisateur et mot de passe.",
+    56: "Nom d'utilisateur",
+    57: 'Mot de passe',
     60: 'Créez un mot de passe pour vous connecter à Specter',
   },
 } satisfies Record<string, LangDict>
