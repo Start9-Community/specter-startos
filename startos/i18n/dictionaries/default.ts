@@ -32,6 +32,17 @@ const dict = {
 
   // init/promptSelectNode.ts
   'Please choose which backend Specter should use.': 40,
+
+  // actions/resetPassword.ts
+  'Reset Admin Password': 50,
+  'Create Admin Password': 51,
+  'Generate a new password for the Specter admin account': 52,
+  'Generate the password for the Specter admin account': 53,
+  'Replaces the current admin password and restarts Specter if it is running. Swan credentials Specter stored under the old password are erased.': 54,
+  'Your Specter admin password is below. Save it to a password manager. If Specter asks for a username, it is "admin".': 55,
+
+  // init/taskAdminPassword.ts
+  'Create a password to sign in to Specter': 60,
 } as const
 
 /**
